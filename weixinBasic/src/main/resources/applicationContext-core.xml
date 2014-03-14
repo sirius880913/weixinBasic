@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:task="http://www.springframework.org/schema/task" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+	http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+	 http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-3.0.xsd	
+	http://www.springframework.org/schema/context
+	http://www.springframework.org/schema/context/spring-context-3.0.xsd">
+	<!-- switch between local and remote deployment -->
+
+	<!-- For async and scheduler -->
+	<context:annotation-config />
+	<task:executor id="myExecutor" pool-size="32" />
+	<task:annotation-driven executor="myExecutor" />
+	
+	<context:component-scan base-package="com.sirius.weixinBasic">
+    </context:component-scan>
+	
+	<bean id="applicationContextHolder" class="com.netease.libs.spring.ApplicationContextHolder"></bean>
+    <bean id="httpClientUtil" class="com.netease.libs.http.HttpClientUtil">
+        <constructor-arg index="0" value="10000"></constructor-arg>
+        <constructor-arg index="1" value="10000"></constructor-arg>
+    </bean>
+	
+	<!-- For controller mapping, to json -->
+	<bean id="jaxb2Marshaller" class="org.springframework.oxm.jaxb.Jaxb2Marshaller">
+		<property name="packagesToScan" value="com.netease.yixin" />
+	</bean>
+
+	<!-- For controller mapping, to xml -->
+	<bean id="xstreamMarshaller" class="org.springframework.oxm.xstream.XStreamMarshaller">
+		<property name="autodetectAnnotations" value="true" />
+		<property name="streamDriver">
+			<bean class="com.thoughtworks.xstream.io.xml.DomDriver" />
+		</property>
+	</bean>
+	
+	<bean id="propertyConfigurer"
+		class="com.netease.libs.spring.BasePropertyPlaceholderConfigurer">
+		<property name="order" value="0" />
+		<property name="ignoreUnresolvablePlaceholders" value="true" />
+		<property name="locations">
+			<list>
+				<value>classpath:config.properties</value>
+                <value>classpath:db.properties</value>
+			</list>
+		</property>
+	</bean>
+
+    <bean id="dataSource" destroy-method="close"
+          class="org.apache.commons.dbcp.BasicDataSource">
+        <property name="driverClassName" value="com.mysql.jdbc.Driver"/>
+        <property name="url" value="${jdbcUrl}"/>
+        <property name="username" value="${userName}"/>
+        <property name="password" value="${password}"/>
+        <property name="maxActive" value="20"/>
+        <property name="initialSize" value="10"/>
+        <property name="maxWait" value="10000"/>
+        <property name="maxIdle" value="10"/>
+        <property name="minIdle" value="10"/>
+    </bean>
+
+    <bean id="jdbcTemplate"
+          class="org.springframework.jdbc.core.JdbcTemplate">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+    
+    <bean id="multipartResolver"
+		class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+		<!-- 内存缓存1M -->
+		<property name="maxInMemorySize" value="1000000"></property>
+		<!-- 最大100M -->
+		<property name="maxUploadSize" value="104857600" />
+	</bean>
+</beans>
